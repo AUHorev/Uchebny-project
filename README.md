@@ -1,2 +1,1 @@
-# uhebny
-uchebniy
+HELLO!
