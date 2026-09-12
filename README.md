@@ -1,2 +1,1 @@
-# testArtur
-uchebniy
+HELLO!
