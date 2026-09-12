@@ -1,0 +1,87 @@
+
+-- task 1
+
+select 
+type,
+count(*) cnt
+from locations
+group by type
+
+-- task 2
+
+select 
+type,
+AVG(danger_level) avg_danger
+from locations 
+group by type
+
+-- task 3
+
+select 
+issued_by,
+count(*)
+from quests q 
+group by  issued_by
+order by issued_by asc
+
+-- task 4
+
+SELECT issued_by,
+ SUM(reward_gold) total_reward
+  FROM quests
+  WHERE reward_gold IS NOT NULL
+  GROUP BY issued_by;
+
+-- task 5
+SELECT 
+    event_type,
+    AVG(risk_level) as avg_rsk
+FROM events 
+GROUP BY event_type 
+HAVING AVG(risk_level) >= 7
+order by event_type asc
+
+-- task 6
+
+
+SELECT 
+    species cies,
+    avg(strength_level) as avg_str
+FROM characters
+GROUP BY species 
+HAVING avg(strength_level) > 6;
+
+-- task 7
+
+select
+role_in_event,
+count(*) count_role
+from event_participants 
+group by role_in_event 
+
+-- task 8
+SELECT location_id,
+       COUNT(*) cnt
+  FROM events
+  GROUP BY location_id
+  HAVING COUNT(*)>=2
+
+-- task 9
+select
+location_id,
+max(risk_level) risc_loc
+from events 
+group by location_id 
+
+-- task 10
+
+
+SELECT 
+    species,
+    COUNT(*) as ct
+FROM characters
+WHERE alignment = 'evil'
+GROUP BY species
+
+
+
