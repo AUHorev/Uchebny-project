@@ -1,0 +1,88 @@
+--Task 1
+
+select
+imployee_id,
+departments_id
+from employee e
+left join employee m on e.department_id=m.departmeny_id
+and m.is_manadger = true 
+where e.is_manager_id=fulse
+AND e.birth_d<m.birth_dt 
+
+-- task 2
+select 
+c.client_id
+m.client_id
+from clients c
+left join clients m 
+on c.city=m.city
+and c.client_id<m.client_id
+
+-- Task 3
+select 
+c1.client_id,
+c2.client_id
+From clients c1 
+Left join clients c2
+on c1.phone=c2phone 
+and c1.client_id<c2.client_id
+
+-- task 4
+select
+t1.team,
+count(distinct t2.points)+1 as place
+from team t1
+left join team t2
+on t1.points>t2points 
+group by t1.team
+
+-- task 5 
+select p1.product_id,
+from products p1
+join product base on base.product=1
+where p1.price>base.prise
+
+-- task 6
+select 
+s1.session_id,
+s2.session_id
+from session s1
+join session s2 on s1.user_id=s2.user_id
+and s1.session_id<s2sesson_id
+and s1.start_ts<s2.end_ts
+and s2.start_ts<s1.end_ts
+
+-- task 7 
+select
+e.name as employee_name,
+m.name as manadger_name
+from employees e
+left join employees m on e.manager_id=m.employee_id
+
+-- task 8
+select
+s1.id,
+count(s2.id) as great
+from scores sc1
+join scores sc 2 on s1.id=2.id
+and s2.di>s1.id
+group by s1.id
+
+-- task 9
+
+select 
+e.employee_id,
+d.employee_id
+from employees e
+join employees d
+on e.department_id=d.department_id
+and e.employee_id<d.employee_id
+
+-- Task 10
+select
+o1.order_id,
+o2.order_id
+from orders o1
+join orders o2
+on o1.client_id=o2.client_id
+and o1.order_id>o2.order>id

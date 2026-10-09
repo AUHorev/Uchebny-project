@@ -1,0 +1,73 @@
+Task 1 
+select 
+client_id,
+operation_id,
+amount,
+sum(amount) over(partition by client_id order by operation_dt) as sum_cl
+from transactions
+
+Task 2
+SELECT
+    category,
+    revenue,
+    revenue * 1.0 / SUM(revenue) OVER () AS revenue_share
+FROM category_sales;
+
+
+TAsk 3
+select category,
+product_id,
+revenue,
+revenue * 1.0 / sum(revenue) over(partition by  category )
+from product sales
+
+Task 4 скользящая сумма за 3 дня
+Select
+dt,
+sum (revenye) over (order by rows between 2 proceeding and current row) as rev_3d
+from daily_sales
+
+-- Task 5
+select 
+account_id,
+sum(amount) over (partition by  account_id order by operation_dt) as 
+
+
+-- task 6
+select 
+order_id,
+sum(amount) over(partition by order_id) as total_amount
+from
+orders
+
+-- task 7 
+select 
+sum (amount) over(partition by date_trunc ('mouns' order_dt) order by order_dt) as total_amount
+from orders
+
+-- task 8
+select 
+user_id,
+sum(points) over (partition by user_id order by earned_at) as total_points 
+from points
+
+-- task 9
+ select*,
+ sum (qti_delta) over(partition by sku_id order by muvement_dt desc) as ostatok
+ from stock_movements
+
+
+ -- task 10 
+ with q as(
+    select order_dt,
+    sum (amount) as revenue
+    from orders
+    group by order_dt
+ )
+ select
+ order_dt,
+ revenue,
+ sum (revenue) over (order by order_dt) as sum_revenue
+ from q
+
+ 

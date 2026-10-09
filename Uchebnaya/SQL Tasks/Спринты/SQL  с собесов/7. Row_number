@@ -1,0 +1,63 @@
+--- TASK 1
+with A as (
+    select *,
+    row_number() over(
+        partition by entity_id 
+        order BY event_dt desc) as row_number
+        from History
+    )
+select entity_id, event_id, value 
+from A where row_number = 1
+
+---- task 2
+with Q as (
+    select*
+    row_number() over (
+        partition by client_id order by order_dt asc) as row_number
+    from orders)
+    select *from Q where rn <=3
+
+
+----TASK 3
+with Q as(
+    select *
+    rov_number () over (
+        partition by user_id, event_id order by loadet_at desc) as row_number
+        from events
+    )
+select * from Q
+where row=1
+
+
+--TASK 4
+with Z as(
+    select *, row_number() over (
+        partition by
+        user_id, event_id order by loaded_at desc) as row_n
+    from events)
+    select * from Z
+    where row_n = 1
+
+
+task 5
+with Q as (
+    select *, row_number() over (
+        partition by
+user_id, paynment_id order by amount desc ) as row_n
+from paynments 
+    )
+    select * 
+    from paynments
+where row_n=1
+
+task 6 
+with W as(
+    select *, row_number() over (
+        partition by
+ticket_id, status order by changed_at desc
+    ) as roU_N
+    from ticket_status
+)
+select *
+from w
+where rou_N = 1

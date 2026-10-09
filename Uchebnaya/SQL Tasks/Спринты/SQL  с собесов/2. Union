@@ -1,0 +1,93 @@
+ -- task 1
+select client_id
+from web_clients
+union
+select client_id
+from app_clients
+
+получаем все ID  без повторов 4 строки  101, 102, 103, 104
+
+ -- task 2
+ select
+ user_id, event_name
+ from web_events
+ union
+ select
+ user_id, event_name
+ frommobile_events
+
+ объденить как веб эвентс
+ 
+
+  -- task 3
+  select client_id, sity
+  fromcrm_client
+  union
+  select client_id, syti
+  from billing-app_clients
+
+  -- task 4
+  select user_id
+  from old_users
+  union
+  select cast (user_id as INT) 
+  from new users
+
+-- task 4
+    select user_id, paynment_dt
+    from payments
+    where paynment_dt>='2026-01-01' AND
+    paynment_dt <'2026-02-01'
+    union
+    select user_id, refund_dt
+    from refunds 
+    where refund_dt>='2026-02-01' AND
+    refund_dt <'2026-03-01'
+
+
+-- task 5
+select num 
+from a
+union
+select num
+from b 
+order by num asc
+
+
+-- task 6
+select num 
+from a 
+order by num
+union
+select num 
+from b 
+order by num
+
+-- task 7
+select 'online sales' as sales, sale_id amount
+from oline_sales
+union 
+select
+'offline sales'as sales, sale_id, amount
+from offline sales
+
+-- task 8
+selec client_id
+fromemail_client
+intersect
+select client_id
+from push_clients
+
+-- task 9
+select all_clients from client_id
+exept
+select client_id from blocked_clients
+
+-- task 10
+select sum(amount) as sale
+from sale_2025
+group by sale_dt
+union all
+select sum(amount) as sale
+from sale_2026
+group_by sale_dt

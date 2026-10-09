@@ -1,0 +1,88 @@
+-- task 1
+SELECT month_dt, revenue,
+       revenue - LAG(revenue) OVER (ORDER BY month_dt) AS revenue_diff
+FROM monthly_revenue;
+
+-- task 2
+
+SELECT
+    client_id,
+    order_id,
+    order_dt,
+    LAG(order_dt) OVER (
+PARTITION BY client_id
+ORDER BY order_dt
+)
+FROM orders;
+
+
+
+task 3
+select produkt_id, price, changet_at
+price - lag(price) over ( partition by product_id order by change_at) as prev_price
+from price_history
+
+task 4
+WITH x AS (
+    SELECT
+        user_id,
+        event_dt,
+        LAG(event_dt) OVER (
+            PARTITION BY user_id
+            ORDER BY event_dt
+        ) AS prev_event
+    FROM events
+)
+
+SELECT *
+FROM x
+WHERE event_dt - prev_event > 7;
+
+--- task 6 
+with A as (
+    select ticket_id, changed_at, status,
+    lag(status) over (partition by ticket_id order by changed_at) as prev_status
+    from ticket_status)
+    select *
+    from A 
+    where prev_status is null or status <> prev_status
+
+
+--- task 7
+with A as(
+    select
+    client_id, visit_dt,
+    visit_dt - lead(visit_dt) over (partition by client_id order by visit_dt) as pr_visit
+from visits ) 
+select *
+from A
+
+
+-- task 8
+select 
+sku_id, stock_dt, stock_count,
+stock_cnt-lag(stock count)  over (partition by sku_id order by stock_dt) as prev_stock
+from stock 
+
+-- Task 9 
+whis prev as(
+    select dt, amount
+    lag (amount) over (order by dt) as prev_amount
+   from revenue)
+   select
+   dt,amount
+   from prev
+   where amount < prev_amount
+
+
+
+   -- task 10
+WITH x AS (
+SELECT event_dt,
+LEAD(event_dt) OVER (ORDER BY event_dt) AS next_event_dt
+FROM calendar_events
+)
+SELECT event_dt
+FROM x
+WHERE next_event_dt IS NOT NULL
+AND next_event_dt <> event_dt + INTERVAL '1 day';

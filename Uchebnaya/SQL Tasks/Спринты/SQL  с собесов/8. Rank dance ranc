@@ -1,0 +1,81 @@
+--- task 1
+with x as(
+select*, 
+dense_rank() over (Partition by dep_id order by salary desc) as dense_rank
+from employee
+)
+select 8 from x 
+where dance_rank=2
+
+---task 2
+select name, score,
+rank () over (partition by name order by score desk) as rank_score,
+denыe_rank () over (partition by name order by score desk) as _dense_rank_score
+from score 
+
+--- Task 3
+select product_id, revenue, 
+denыe_rank () over (partition by order_id order by revenue desc) as rank_revenue
+from products
+
+--  task 4
+select
+team,
+points,
+rank() over (order by points desc) as rank
+from teams
+
+
+--- Task 5
+with q as (
+    select
+    client_id,
+    total_amount,
+    rank () over (order by total_amount desk) as rank
+    from client_totals
+)
+select * from Q
+where rank=3
+
+-- TAsk 6
+select mounth_dt, product_id, rank
+rank () over (prtition by mounth_dt order by revenue desc) as rank_revenue
+from sales
+
+
+
+-- Task 7
+WITH x AS (
+SELECT *, DENSE_RANK() OVER (ORDER BY score ASC) AS rnk
+FROM results
+)
+SELECT * FROM x WHERE rnk <= 2
+
+-- Task 8
+WITH by_category AS (
+SELECT category, SUM(amount) AS revenue
+FROM orders
+GROUP BY category
+)
+SELECT category, revenue,
+DENSE_RANK() OVER (ORDER BY revenue DESC) AS rnk
+FROM by_category
+
+
+-- Task 9
+WITH x AS (
+SELECT *, RANK() OVER (ORDER BY score DESC) AS rnk
+FROM scores
+)
+SELECT * FROM x WHERE rnk = 1
+
+
+-- Task 10
+WITH x AS (
+SELECT value, DENSE_RANK() OVER (ORDER BY value DESC) AS rnk
+FROM numbers
+)
+SELECT DISTINCT value
+FROM x
+WHERE rnk = 2
+

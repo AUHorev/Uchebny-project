@@ -1,0 +1,82 @@
+-- Task 1
+select 
+order_id,
+case when amount < 1000 then 'low'
+when amount <10000 then 'midl'
+else 'high' end as amount_segment
+from orders
+
+
+--- task 2
+Select 
+client_id,
+case when age < 18 then 'smol'
+when age <50 then 'midl'
+else 'old' end as age_segment
+from clients
+
+
+-- task 3
+select
+painment_id,
+case when status 'done', 'ok' then 'sucsess'
+when 'error', 'fail' then 'faild'
+else 'unknow' end bisines_status
+from 
+
+-- task 4
+select 
+ticket_id,
+case when is_vip=true then 'high'
+when hours_left <5 then 'high'
+when hours <=24 then 'medium'
+else 'low' end as priorititi
+from tickets
+
+-- task 5
+SELECT sale_id,
+CASE channel_code
+WHEN 'W' THEN 'web'
+WHEN 'M' THEN 'mobile'
+ELSE 'partner' END AS channel_name
+FROM sales;
+
+--- task 6
+SELECT client_id,
+CASE WHEN activation_date >= DATE '2026-04-23' THEN 'week'
+WHEN activation_date >= DATE '2026-03-31' THEN 'month'
+WHEN activation_date >= DATE '2025-04-30' THEN 'year'
+ELSE 'old' END AS activation_segment
+FROM clients;
+
+
+--- task 7
+SELECT client_id,
+CASE WHEN days_overdue >= 30 OR debt_amount >= 5000 THEN 'high'
+WHEN days_overdue > 0 THEN 'medium'
+ELSE 'low' END AS risk_group
+FROM debts;
+
+--- task 8
+select 
+client_id,
+case when orders_cnt >=10 then 'high'
+when orders_cnt>=5 then 'medium'
+else 'low' end
+from client_orders
+
+
+-- task 9
+
+SELECT sku_id,
+CASE WHEN stock_cnt = 0 THEN 'out_of_stock'
+WHEN stock_cnt < 10 THEN 'low_stock'
+ELSE 'enough' END AS stock_status
+FROM stock;
+
+--- task 10 
+
+SELECT
+SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END) AS success_amount,
+SUM(CASE WHEN status <> 'success' THEN amount ELSE 0 END) AS failed_amount
+FROM payments;

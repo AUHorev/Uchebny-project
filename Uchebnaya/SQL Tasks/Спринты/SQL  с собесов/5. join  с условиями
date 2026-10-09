@@ -1,0 +1,86 @@
+---task 1
+SELECT
+    s.sale_id,
+    p.price
+FROM sales s
+JOIN price p
+    ON s.product_id = p.product_id
+    AND s.sale_dt >= p.valid_from
+    AND s.sale_dt < p.valid_to;
+
+    --- ок ка то сделал без вере
+
+
+
+--- task 2
+select 
+p.payment_id,
+p.amount,
+c.rate
+from payments p join commission_rules c
+ON p.amount >= r.amount_from
+AND p.amount < r.amount_to
+
+
+--- task 3
+select o.operation_id,
+o.amount*r.rate as amount_rub
+from operations o join rates r 
+on o.currency=r.currency
+and  o.operation_dt = r.rate_dt
+
+task 4
+select o.order_id, o.client_id, 
+c.segment
+from orders o join client_segments c
+on c.client_id=o.client_id 
+and o.order_dt>=c.valid_from
+and  o.order_dt<c.valid_to   
+
+
+--- task 5
+select  
+o.order_id
+from orders o
+join promos p 
+on p.promo_code=o.promo_code
+and
+o.order_dt>=p.date and o.order_dt<p.date_to
+
+--- task 6
+select b.room_id, b.start_ts, b.end_ts
+from bookings b
+join repeirs r on b.room_id=r.room_id
+and b.start_ts<r.start_ts
+and r.start_ts<r.b.end_ts
+
+-- TAsk 7
+select
+s.user_id, c.crm_id
+from site_user s
+join crm_users c 
+on LOWER(s.email) = LOWER(c.email);
+
+-- task 8 
+select 
+o.order_id,
+d.amount,
+d.discount_pct
+from orders o
+join discount d 
+on o.amount>=d.min_amount
+
+-- task 9
+SELECT o.operation_id, d.department
+FROM operations o
+JOIN employee_dept d ON o.employee_id = d.employee_id
+AND o.operation_dt >= d.valid_from
+AND o.operation_dt < d.valid_to;
+
+
+-- task 10
+SELECT c.client_id, o.order_id
+FROM clients c
+LEFT JOIN orders o ON c.client_id = o.client_id
+ AND o.order_dt >= DATE '2026-04-01'
+ AND o.order_dt < DATE '2026-05-01';

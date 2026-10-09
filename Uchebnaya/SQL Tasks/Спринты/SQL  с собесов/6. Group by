@@ -1,0 +1,79 @@
+--- Task 1 
+count(order_id),
+sum(amount)
+from orders
+group by ategory
+
+
+---- Task 2
+select user_id
+from orders
+where order_dr>= date '2026-01-01' and order_dt<='2026-04-01'
+HAVING COUNT(DISTINCT DATE_TRUNC('month', order_dt)) = 3; ---  вот это написать надо научитсья
+having count(distinct date_trunc()) ---  ну ок будем повторяттьоптом и запомним
+
+task 3
+SELECT
+    tariff,
+    AVG(amount) AS average_amount
+FROM payments
+GROUP BY tariff
+HAVING COUNT(payment_id) >= 2 ---  да да получилось у меня
+
+--- task 4
+select 
+count(distinct sku_id) as count
+from order_items
+group by order_id
+
+-- task 5
+select 
+client_ id,
+count(*) FILTER (where status='succes') as succes_cnt,
+count(*) Filter (where status=''fail) as succces_cnt
+from paynment
+group by client_id
+
+--task 6
+select 
+client_id,
+min(order_dt) as min_dt
+max(order_dt) as max_dt
+group by client_id
+
+-- tasc 7
+select
+order_dt,
+date_trunc('month', order_dt) as monts
+sum(amount) as sum_amount
+from orders
+group by date_trunc('month', order_dt)
+
+-- task 8
+select
+client_id,
+sum(amount) cl_am
+from client
+group by client_id
+having sum(amount)>1000
+
+-- task 9
+with rev as(
+    select category,
+    sum(amount) as revenue
+    from orders
+    group by category
+)
+select 
+category,
+revenue,
+revenue*1.0/sum (revenue) over() as total_revenue
+from
+rev
+
+
+-- tasc 10
+select
+case when amount>=1000 then 'Big' else 'small' end as order_size
+from orders 
+group by case when amount>=1000 then'big' elese 'smal' end

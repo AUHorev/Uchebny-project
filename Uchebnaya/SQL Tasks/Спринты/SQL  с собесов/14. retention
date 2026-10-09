@@ -1,0 +1,169 @@
+--- task 1 ----  тоже потом хоть написать бы .. прочесть вроде смогу уже
+
+WITH first_seen AS (
+    SELECT user_id,
+           MIN(event_dt::date) AS cohort_dt
+    FROM events
+    GROUP BY user_id
+)
+SELECT COUNT(DISTINCT f.user_id) AS cohort_size,
+       COUNT(DISTINCT e.user_id) AS returned_d1,
+       ROUND(
+           100.0 * COUNT(DISTINCT e.user_id)
+           / NULLIF(COUNT(DISTINCT f.user_id), 0),
+           2
+       ) AS d1_retention_pct
+FROM first_seen f
+LEFT JOIN events e
+       ON e.user_id = f.user_id
+      AND e.event_dt::date = f.cohort_dt + 1;
+
+
+--- task 2
+
+WITH cohorts AS (
+    SELECT user_id,
+           registration_dt::date AS cohort_dt
+    FROM users
+    WHERE registration_dt::date <= DATE '2026-04-30' - 30
+)
+SELECT c.cohort_dt,
+       COUNT(DISTINCT c.user_id) AS cohort_size,
+       ROUND(
+           100.0 * COUNT(DISTINCT CASE
+               WHEN e.event_dt::date = c.cohort_dt + 1 THEN c.user_id
+           END) / NULLIF(COUNT(DISTINCT c.user_id), 0),
+           2
+       ) AS d1_retention_pct,
+       ROUND(
+           100.0 * COUNT(DISTINCT CASE
+               WHEN e.event_dt::date = c.cohort_dt + 7 THEN c.user_id
+           END) / NULLIF(COUNT(DISTINCT c.user_id), 0),
+           2
+       ) AS d7_retention_pct,
+       ROUND(
+           100.0 * COUNT(DISTINCT CASE
+               WHEN e.event_dt::date = c.cohort_dt + 30 THEN c.user_id
+           END) / NULLIF(COUNT(DISTINCT c.user_id), 0),
+           2
+       ) AS d30_retention_pct
+FROM cohorts c
+LEFT JOIN events e
+       ON e.user_id = c.user_id
+      AND e.event_dt::date BETWEEN c.cohort_dt + 1
+                               AND c.cohort_dt + 30
+GROUP BY c.cohort_dt
+ORDER BY c.cohort_dt;
+
+--- task 3
+
+WITH eligible_users AS (
+    SELECT user_id,
+           registration_dt::date AS cohort_dt
+    FROM users
+    WHERE registration_dt::date <= DATE '2026-04-30' - 7
+)
+SELECT COUNT(DISTINCT u.user_id) AS eligible_users,
+       ROUND(
+           100.0 * COUNT(DISTINCT CASE
+               WHEN e.event_dt::date = u.cohort_dt + 7 THEN u.user_id
+           END) / NULLIF(COUNT(DISTINCT u.user_id), 0),
+           2
+       ) AS exact_d7_retention_pct,
+       ROUND(
+           100.0 * COUNT(DISTINCT e.user_id)
+           / NULLIF(COUNT(DISTINCT u.user_id), 0),
+           2
+       ) AS rolling_d7_retention_pct
+FROM eligible_users u
+LEFT JOIN events e
+       ON e.user_id = u.user_id
+      AND e.event_dt::date BETWEEN u.cohort_dt + 7
+                               AND DATE '2026-04-30';
+
+--- task 4
+
+WITH cohorts AS (
+    SELECT user_id,
+           DATE_TRUNC('week', registration_dt)::date AS cohort_week
+    FROM users
+),
+cohort_sizes AS (
+    SELECT cohort_week,
+           COUNT(*) AS cohort_size
+    FROM cohorts
+    GROUP BY cohort_week
+),
+activity AS (
+    SELECT DISTINCT
+           c.user_id,
+           c.cohort_week,
+           (
+               DATE_TRUNC('week', e.event_dt)::date
+               - c.cohort_week
+           ) / 7 AS week_number
+    FROM cohorts c
+    JOIN events e ON e.user_id = c.user_id
+    WHERE DATE_TRUNC('week', e.event_dt)::date >= c.cohort_week
+),
+weeks AS (
+    SELECT GENERATE_SERIES(0, 4) AS week_number
+)
+SELECT cs.cohort_week,
+       w.week_number,
+       cs.cohort_size,
+       COUNT(DISTINCT a.user_id) AS active_users,
+       ROUND(
+           100.0 * COUNT(DISTINCT a.user_id)
+           / NULLIF(cs.cohort_size, 0),
+           2
+       ) AS retention_pct
+FROM cohort_sizes cs
+CROSS JOIN weeks w
+LEFT JOIN activity a
+       ON a.cohort_week = cs.cohort_week
+      AND a.week_number = w.week_number
+GROUP BY cs.cohort_week, w.week_number, cs.cohort_size
+ORDER BY cs.cohort_week, w.week_number;
+
+--- task 5
+
+WITH cohorts AS (
+    SELECT user_id,
+           DATE_TRUNC('month', registration_dt)::date AS cohort_month
+    FROM users
+),
+cohort_sizes AS (
+    SELECT cohort_month,
+           COUNT(*) AS cohort_size
+    FROM cohorts
+    GROUP BY cohort_month
+),
+activity AS (
+    SELECT DISTINCT
+           c.user_id,
+           c.cohort_month,
+           (
+               (EXTRACT(YEAR FROM e.event_dt)
+                - EXTRACT(YEAR FROM c.cohort_month)) * 12
+               + EXTRACT(MONTH FROM e.event_dt)
+               - EXTRACT(MONTH FROM c.cohort_month)
+           )::int AS month_number
+    FROM cohorts c
+    JOIN events e ON e.user_id = c.user_id
+    WHERE e.event_dt::date >= c.cohort_month
+)
+SELECT s.cohort_month,
+       s.cohort_size,
+       ROUND(100.0 * COUNT(DISTINCT CASE WHEN a.month_number = 0 THEN a.user_id END)
+             / NULLIF(s.cohort_size, 0), 2) AS m0_retention_pct,
+       ROUND(100.0 * COUNT(DISTINCT CASE WHEN a.month_number = 1 THEN a.user_id END)
+             / NULLIF(s.cohort_size, 0), 2) AS m1_retention_pct,
+       ROUND(100.0 * COUNT(DISTINCT CASE WHEN a.month_number = 2 THEN a.user_id END)
+             / NULLIF(s.cohort_size, 0), 2) AS m2_retention_pct,
+       ROUND(100.0 * COUNT(DISTINCT CASE WHEN a.month_number = 3 THEN a.user_id END)
+             / NULLIF(s.cohort_size, 0), 2) AS m3_retention_pct
+FROM cohort_sizes s
+LEFT JOIN activity a ON a.cohort_month = s.cohort_month
+GROUP BY s.cohort_month, s.cohort_size
+ORDER BY s.cohort_month;

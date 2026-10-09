@@ -1,0 +1,151 @@
+-- task 1  ---- даже не возьмусь пока Ж)))
+WITH activity_days AS (
+    SELECT DISTINCT user_id, activity_dt::date AS activity_dt
+    FROM user_activity
+),
+numbered AS (
+    SELECT user_id,
+           activity_dt,
+           activity_dt
+               - (ROW_NUMBER() OVER (
+                     PARTITION BY user_id
+                     ORDER BY activity_dt
+                 ))::int AS island_key
+    FROM activity_days
+)
+SELECT user_id,
+       MIN(activity_dt) AS island_start,
+       MAX(activity_dt) AS island_end,
+       COUNT(*) AS days_cnt
+FROM numbered
+GROUP BY user_id, island_key
+ORDER BY user_id, island_start;
+
+
+--- task 2 --- позднее
+WITH marked AS (
+    SELECT order_id,
+           changed_at,
+           status,
+           CASE
+               WHEN status = LAG(status) OVER (
+                   PARTITION BY order_id
+                   ORDER BY changed_at
+               ) THEN 0
+               ELSE 1
+           END AS is_new_island
+    FROM order_status_history
+),
+grouped AS (
+    SELECT *,
+           SUM(is_new_island) OVER (
+               PARTITION BY order_id
+               ORDER BY changed_at
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+           ) AS island_id
+    FROM marked
+)
+SELECT order_id,
+       status,
+       MIN(changed_at) AS period_start,
+       MAX(changed_at) AS period_end,
+       COUNT(*) AS status_events
+FROM grouped
+GROUP BY order_id, island_id, status
+ORDER BY order_id, period_start;
+
+----task 3
+WITH numbered AS (
+    SELECT route_id,
+           seat_no,
+           seat_no
+               - (ROW_NUMBER() OVER (
+                     PARTITION BY route_id
+                     ORDER BY seat_no
+                 ))::int AS island_key
+    FROM free_seats
+)
+SELECT route_id,
+       MIN(seat_no) AS first_seat,
+       MAX(seat_no) AS last_seat,
+       COUNT(*) AS seats_cnt
+FROM numbered
+GROUP BY route_id, island_key
+HAVING COUNT(*) >= 3
+ORDER BY route_id, first_seat;
+
+----task 4
+WITH previous_event AS (
+    SELECT user_id,
+           event_ts,
+           LAG(event_ts) OVER (
+               PARTITION BY user_id
+               ORDER BY event_ts
+           ) AS previous_event_ts
+    FROM events
+),
+marked AS (
+    SELECT *,
+           CASE
+               WHEN previous_event_ts IS NULL
+                 OR event_ts - previous_event_ts > INTERVAL '30 minutes'
+               THEN 1 ELSE 0
+           END AS is_new_session
+    FROM previous_event
+),
+grouped AS (
+    SELECT *,
+           SUM(is_new_session) OVER (
+               PARTITION BY user_id
+               ORDER BY event_ts
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+           ) AS session_id
+    FROM marked
+)
+SELECT user_id,
+       session_id,
+       MIN(event_ts) AS session_start,
+       MAX(event_ts) AS session_end,
+       COUNT(*) AS events_cnt
+FROM grouped
+GROUP BY user_id, session_id
+ORDER BY user_id, session_start;
+
+----task 5
+
+WITH ordered AS (
+    SELECT user_id,
+           start_dt,
+           end_dt,
+           MAX(end_dt) OVER (
+               PARTITION BY user_id
+               ORDER BY start_dt, end_dt
+               ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+           ) AS max_previous_end
+    FROM subscriptions
+),
+marked AS (
+    SELECT *,
+           CASE
+               WHEN max_previous_end IS NULL
+                 OR start_dt > max_previous_end + 1
+               THEN 1 ELSE 0
+           END AS is_new_island
+    FROM ordered
+),
+grouped AS (
+    SELECT *,
+           SUM(is_new_island) OVER (
+               PARTITION BY user_id
+               ORDER BY start_dt, end_dt
+               ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+           ) AS island_id
+    FROM marked
+)
+SELECT user_id,
+       MIN(start_dt) AS period_start,
+       MAX(end_dt) AS period_end,
+       MAX(end_dt) - MIN(start_dt) + 1 AS days_cnt
+FROM grouped
+GROUP BY user_id, island_id
+ORDER BY user_id, period_start;
