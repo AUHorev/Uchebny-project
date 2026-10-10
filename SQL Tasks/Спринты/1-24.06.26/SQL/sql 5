@@ -1,0 +1,116 @@
+-
+-- task 1
+---- 1. События с макс длительностью.
+WITH 
+dlit_sob AS (
+    SELECT
+        event_id,
+        (end_day - start_day + 1) AS dlit
+    FROM events e
+    WHERE end_day IS NOT NULL
+),
+max_dl AS (
+    SELECT 
+        MAX(dlit) AS max_d
+    FROM dlit_sob
+)
+SELECT 
+    e.event_id,  -- обратите внимание на правильное название поля
+    e.event_type,  -- здесь тоже должно быть event_type
+    md.max_d
+FROM max_dl md
+JOIN dlit_sob ds ON ds.dlit = md.max_d
+JOIN events e ON e.event_id = ds.event_id;  -- добавлено соединение с events
+
+
+---task 2
+----- теперь и снова СТЕ
+
+
+WITH 
+kolichestvo AS (
+    SELECT
+        e.location_id,
+        COUNT(e.event_id) AS kol_vo
+    FROM events e 
+    GROUP BY e.location_id
+),
+max_k AS (
+    SELECT 
+        MAX(k.kol_vo) AS max_k1
+    FROM kolichestvo k
+)
+SELECT 
+    l.location_id,
+    l.name,
+    k.kol_vo
+FROM max_k m
+JOIN kolichestvo k ON m.max_k1 = k.kol_vo
+JOIN locations l ON l.location_id = k.location_id;  -- предполагаем, что есть таблица locations
+
+----TASK 3 через СТЕ
+WITH 
+high_risk_events AS (
+    SELECT 
+        event_id
+    FROM events e 
+    WHERE risk_level >= 8
+),
+character_participations AS (
+    SELECT
+        ep.character_id,
+        COUNT(*) as cnt
+    FROM event_participants ep
+    JOIN high_risk_events hre 
+        ON ep.event_id = hre.event_id
+    GROUP BY ep.character_id
+    HAVING COUNT(*) > 1
+)
+-- Обратите внимание на правильное завершение CTE
+SELECT 
+    c.name,
+    cp.cnt
+FROM character_participations cp
+JOIN characters c 
+    ON cp.character_id = c.character_id
+ORDER BY cp.cnt DESC;
+
+---task 4
+WITH qe AS (
+    SELECT q.quest_id,
+       AVG(e.risk_level) avg_r
+  FROM quests q
+  JOIN quest_events x
+    ON x.quest_id=q.quest_id
+  JOIN events e
+    ON e.event_id=x.event_id
+  GROUP BY q.quest_id)
+SELECT q.quest_id,
+       q.quest_name,
+       qe.avg_r
+  FROM qe
+  JOIN quests q
+    ON q.quest_id=qe.quest_id
+  WHERE qe.avg_r>(
+SELECT AVG(risk_level)
+  FROM events)
+
+  -- Task 5
+  --- Выведите топ-5 персонажей по количеству участий в событиях (по event_participants)
+
+  WITH ch_count AS (
+    SELECT
+        character_id,      -- ID персонажа
+        COUNT(*) AS cnt    -- Количество участий
+    FROM event_participants 
+    GROUP BY character_id 
+)
+SELECT 
+    c.character_id,       -- ID персонажа из таблицы characters
+    c.name,               -- Имя персонажа
+    ch.cnt               -- Количество участий из CTE
+FROM ch_count ch         -- Используем результат CTE
+JOIN characters c 
+ON c.character_id = ch.character_id
+order by ch.cnt desc
+limit 5

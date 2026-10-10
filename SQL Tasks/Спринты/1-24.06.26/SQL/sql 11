@@ -1,0 +1,71 @@
+task 1 
+
+SELECT
+    COUNT(*) AS pairs_count                 -- Считаем общее число подходящих пар персонажей
+FROM
+    characters a                            -- Берём таблицу characters как левую часть (алиас a)
+JOIN
+    characters b                            -- Соединяем её же как правую часть (алиас b) — это self-join
+ON
+ 1=1                                     -- Условие «всегда истина»: формально разрешает JOIN, но само по себе ничего не фильтрует
+AND a.character_id < b.character_id    -- Оставляем только пары, где ID левого персонажа меньше ID правого:
+                                        -- так исключаем дубли (A,B) и (B,A) и пару персонажа с самим собой
+AND a.species <> b.species;            -- Дополнительно оставляем только пары персонажей РАЗНЫХ видов
+
+task 2
+
+select
+a.species,
+a.name a,
+b.name b
+from "characters" a
+join "characters" b
+on 
+a.character_id<b.character_id 
+AND a.species=b.species 
+AND a.alignment<>b.alignment
+
+
+task 3 
+
+select
+e.event_id,
+l.name,
+e.risk_level,
+l.danger_level
+from events e
+join locations l 
+on e.location_id=l.location_id 
+where e.risk_level>l.danger_level 
+
+task 4 
+
+select
+a.event_id,
+b.event_id
+from 
+events a
+join 
+events b
+ON a.event_id<b.event_id AND a.start_day<>b.start_day
+limit 30
+
+task 5
+
+WITH issuers AS (
+    SELECT DISTINCT issued_by
+  FROM quests),
+  aligns AS (
+    SELECT DISTINCT alignment
+  FROM characters)
+SELECT i.issued_by,
+       a.alignment,
+       COUNT(q.quest_id) quests_cnt
+  FROM issuers i
+  JOIN aligns a
+    ON 1=1
+  LEFT JOIN quests q
+    ON q.issued_by=i.issued_by
+  GROUP BY i.issued_by,a.alignment;
+
+

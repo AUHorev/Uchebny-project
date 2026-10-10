@@ -1,0 +1,151 @@
+
+
+
+--- task 2
+топ -2 по силе персонажи в каждом виде  spacies
+
+with r as (
+SELECT species,
+       name,
+       strength_level,
+       ROW_NUMBER() OVER (PARTITION BY species ORDER BY strength_level desc) as rn
+from characters)
+select *
+from r
+where rn<=2 
+
+tasc 3 средняя сила по alignment (окно)
+
+SELECT
+    character_id,          -- выбираем ID персонажа
+    name,                  -- выбираем имя персонажа
+    strength_level,        -- выбираем уровень силы
+    ROUND(                 -- округляем результат до 2 знаков после запятой
+        AVG(strength_level) -- вычисляем среднее значение силы
+        OVER(              -- для оконных функций
+            PARTITION BY alignment  -- группируем по выравниванию (alignment)
+        ),
+        2                  -- количество знаков после запятой
+    ) AS avg_s             -- присваиваем псевдоним результату
+FROM characters;           -- из таблицы characters
+
+----task 4  сила выше средней по виду персонажа
+
+
+WITH x AS (
+    SELECT 
+        *,                  -- выбираем все поля из таблицы characters
+        AVG(strength_level) -- вычисляем среднее значение силы
+            OVER (          -- для оконных функций
+                PARTITION BY species  -- группируем по видам
+            ) as avg_s      -- присваиваем псевдоним среднему значению
+    FROM characters         -- из таблицы characters
+)
+SELECT 
+    name,                   -- имя персонажа
+    species,                -- вид персонажа
+    strength_level         -- уровень силы
+FROM x                     -- из временного набора данных x
+WHERE strength_level > avg_s;  -- условие: сила больше средней по виду
+
+task 5
+
+SELECT
+    quest_id,          -- ID квеста
+    issued_by,         -- кто выдал квест
+    reward_gold,       -- награда в золоте
+    ROUND(
+        1.0 * reward_gold 
+        / SUM(reward_gold) OVER(PARTITION BY issued_by),  -- вычисляем долю
+        4                                                -- округляем до 4 знаков
+    ) AS share_in_issuer  -- доля от общей награды выдавшего
+FROM quests
+WHERE reward_gold IS NOT NULL
+
+
+
+TASK 7 
+WITH d AS (  -- 1. Создаем Common Table Expression (CTE) с именем d
+    SELECT 
+        start_day,  -- 2. Выбираем дату начала события
+        COUNT(*) AS cnt  -- 3. Считаем количество событий для каждой даты
+    FROM events e  -- 4. Берём данные из таблицы events
+    GROUP BY e.start_day  -- 5. Группируем результаты по дате
+)
+SELECT 
+    start_day,  -- 6. Выводим дату
+    cnt,  -- 7. Выводим количество событий за день
+    SUM(cnt) OVER (  -- 8. Вычисляем накопительную сумму
+        ORDER BY start_day  -- 9. Сортируем по дате
+    ) AS cum_cnt  -- 10. Присваиваем псевдоним накопительной сумме
+FROM d;  -- 11. Берём данные из CTE d  
+
+task 8
+
+sql
+SELECT  -- 1. Базовый оператор выбора данных
+    DISTINCT event_type,  -- 2. Выбираем уникальные типы событий
+    ROUND(  -- 3. Начинаем функцию округления
+        1.0 *  -- 4. Умножаем на 1.0 для получения десятичного результата
+        COUNT(*) OVER (  -- 5. Начинаем подсчет количества записей
+            PARTITION BY event_type  -- 6. Группируем по типу события
+        ) /  -- 7. Делим на
+        COUNT(*) OVER (),  -- 8. Общее количество записей
+        4  -- 9. Округляем до 4 знаков после запятой
+    ) AS share  -- 10. Присваиваем псевдоним результату
+FROM events;  -- 11. Указываем таблицу-источник
+
+
+SELECT 
+    event_type,
+    ROUND(
+        1.0 * COUNT(*) / (SELECT COUNT(*) FROM events),
+        4
+    ) AS share
+FROM events
+GROUP BY event_type;
+
+TASK 9 
+
+WITH r AS (  -- Создаем временное представление (CTE)
+    SELECT 
+        location_id,  -- идентификатор локации
+        event_id,     -- идентификатор события
+        risk_level,   -- уровень риска
+        ROW_NUMBER() OVER (  -- присваиваем порядковый номер
+            PARTITION BY location_id  -- для каждой локации отдельно
+            ORDER BY risk_level DESC, event_id  -- сортируем по убыванию риска
+        ) AS rn  -- сохраняем номер в колонку rn
+    FROM events  -- берем данные из таблицы events
+)
+SELECT *  -- выбираем все данные
+FROM r  -- из нашего CTE
+WHERE rn = 1;  -- оставляем только первую запись для каждой локации
+
+WITH r AS (
+    SELECT location_id,
+       event_id,
+       risk_level,
+       ROW_NUMBER() OVER (PARTITION BY location_id ORDER BY risk_level DESC, event_id) AS rn
+  FROM events )
+SELECT *
+  FROM r
+  WHERE rn=1
+
+  task 10
+
+  SELECT issued_by,
+       quest_id,
+       quest_name,
+       ROW_NUMBER() OVER (PARTITION BY issued_by ORDER BY quest_id) AS rn
+  FROM quests;
+---- РАЗЬЯСНЕНИЕ
+  SELECT  -- 1. Начало оператора выбора данных
+    issued_by,  -- 2. Выбираем, кто выдал квест
+    quest_id,   -- 3. Выбираем идентификатор квеста
+    quest_name, -- 4. Выбираем название квеста
+    ROW_NUMBER() OVER (  -- 5. Присваиваем порядковый номер
+        PARTITION BY issued_by  -- 6. Группируем по тому, кто выдал квест
+        ORDER BY quest_id  -- 7. Сортируем по ID квеста
+    ) AS rn  -- 8. Сохраняем номер в колонку rn
+FROM quests;  -- 9. Берем данные из таблицы quests

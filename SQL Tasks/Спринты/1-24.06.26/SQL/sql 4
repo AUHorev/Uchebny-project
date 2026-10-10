@@ -1,0 +1,105 @@
+--- tasc 1
+
+select 
+e.event_id,
+e.event_type,
+l.name,
+l.type
+from events e 
+join locations l 
+on l.location_id =e.location_id 
+
+--- tasc 2
+select 
+e.event_id,
+e.event_type,
+c.name
+from events e
+join event_participants ep 
+on e.event_id = ep.event_id
+join "characters" c 
+on c.character_id = ep.character_id 
+where c.name = 'Donkey'
+ 
+--- tasc 3
+--- мой ошибочный запрос -- ашел ошибку
+
+select 
+q.quest_id,
+q.quest_name,
+q.success,
+count(qe.quest_id) events_in_quest
+from quests q
+left join quest_events qe 
+on q.quest_id=qe.quest_id
+GROUP BY q.quest_id, q.quest_name, q.success
+
+--- tasc 4
+select
+e.event_id,
+e.event_type
+from events e 
+join event_participants ep
+on e.event_id=ep.event_id
+where ep.role_in_event = 'victim'   
+
+--- tasc 5
+
+SELECT
+    e.event_id,
+    l.name,
+    c.name,
+    ep.role_in_event
+FROM events e 
+JOIN locations l ON e.location_id = l.location_id
+JOIN event_participants ep ON e.event_id = ep.event_id  -- исправлено условие соединения
+JOIN characters c ON ep.character_id = c.character_id
+
+--- tasc 6
+
+select
+l.name
+from locations l 
+join events e on l.location_id = e.location_id 
+join event_participants ep  on ep.event_id =e.event_id 
+join characters c on ep.character_id =c.character_id 
+where c.name = 'Shrek'
+
+--- tasc 7
+
+select
+e.event_id,
+e.event_type,
+c.name as charactre_name,
+ep.role_in_event
+from events e 
+join event_participants ep  on e.event_id = ep.event_id 
+join characters c on ep.character_id = c.character_id 
+where c.alignment = 'evil'
+
+--- tasc 8
+select 
+q.quest_id,
+q.quest_name
+from quests q 
+join quest_events qe on q.quest_id = qe.quest_id 
+join events e on e.event_id = qe.event_id 
+where e.risk_level >=8
+
+
+--- tasc 9
+
+SELECT e.event_id,
+       COUNT(DISTINCT ep.character_id) uniq_participants
+  FROM events e
+  JOIN event_participants ep
+    ON ep.event_id=e.event_id
+  GROUP BY e.event_id;
+--- tasc 10
+
+SELECT c.character_id,
+c.name
+FROM characters c
+LEFT JOIN event_participants ep
+ON ep.character_id=c.character_id
+WHERE ep.event_id IS NULL

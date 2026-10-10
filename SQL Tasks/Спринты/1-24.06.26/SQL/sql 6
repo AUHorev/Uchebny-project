@@ -1,0 +1,81 @@
+task  1
+
+select
+quest_id,
+quest_name
+from quests q
+where lower(q.quest_name)  like'%dragon%'
+
+
+task 2
+select
+quest_name
+from
+quests q 
+where q.quest_name like 'Rescue%'
+
+
+task 3
+
+select 
+quest_name
+from quests q 
+where quest_name like '%Duloc'
+
+
+task 4
+
+
+SELECT 
+    quest_name,
+    LENGTH(quest_name) AS len_q
+FROM quests q 
+ORDER BY len_q DESC;
+
+task 5
+
+SELECT 
+    CONCAT(
+        quest_name, 
+        ' | reward=', 
+        reward_gold
+    ) AS label
+FROM quests
+WHERE reward_gold IS NOT NULL;
+
+task 6
+SELECT 
+quest_id,
+quest_name
+from quests q 
+where lower (q.quest_name) like '%save%'
+or
+lower (q.quest_name ) like '%rescue%'
+
+task 7
+select
+quest_id,
+substr(quest_name, 1,5) first5
+from quests q 
+
+task 8
+
+select
+quest_id,
+replace(quest_name,'','-')dash_title
+from quests q 
+
+task 9
+
+SELECT *  -- выбираем все поля из таблицы
+FROM quests  -- из таблицы quests
+WHERE LENGTH(quest_name) > (  -- где длина названия больше, чем
+    SELECT AVG(LENGTH(quest_name))  -- среднее значение длины названий
+    FROM quests  -- из той же таблицы quests
+);
+task 10
+
+SELECT 
+    quest_id,  -- выбираем ID квеста
+    POSITION('swamp' IN LOWER(quest_name)) pos  -- находим позицию слова 'swamp'
+FROM quests;    

@@ -1,0 +1,160 @@
+task 1
+
+
+   with x as ( SELECT 
+   ch.character_id,
+       ch.name,
+       ch.is_magical,
+       ch.alignment,
+       ch.strength_level,
+       COUNT(ep.event_id) events_cnt
+  FROM characters ch
+  LEFT JOIN event_participants ep
+    ON ep.character_id=ch.character_id
+  GROUP BY ch.character_id,ch.name,ch.is_magical,ch.alignment,ch.strength_level)
+  select 
+  name,
+       events_cnt,
+       case when strength_level>=7 then 1 else 0 end is_dangerous,
+       case when is_magical=1 then 1 else 0 end is_magical,
+       case when alignment='evil' then 1 else 0 end s_evil
+       from x
+
+
+
+task 2
+
+-- 2. Сводка по сегментам: chars_cnt и avg_events.
+WITH x AS (
+    SELECT ch.character_id,
+       CASE
+         WHEN ch.alignment='evil' THEN 'threat'
+         WHEN ch.is_magical=1 THEN 'special'
+         ELSE 'standard'
+       END AS segment,
+       COUNT(ep.event_id) events_cnt
+  FROM characters ch
+  LEFT JOIN event_participants ep
+    ON ep.character_id=ch.character_id
+  GROUP BY ch.character_id,segment)
+SELECT segment,
+       COUNT(*) chars_cnt,
+       ROUND(AVG(events_cnt),3) avg_events
+  FROM x
+  GROUP BY segment;
+
+
+task 3
+
+SELECT issued_by,
+       COUNT(*) quests_cnt,
+       ROUND(AVG(COALESCE(reward_gold,0)),3) avg_reward,
+       ROUND(1.0*SUM(CASE WHEN success=1 THEN 1 ELSE 0 END)/NULLIF(COUNT(*),0),4) success_rate
+  FROM quests
+  WHERE success IS NOT NULL
+  GROUP BY issued_by;
+
+
+task 4
+WITH qe AS (                                  -- CTE 1: базовая агрегация по квестам
+    SELECT
+        q.quest_id,                          -- ID квеста — ключ группировки
+        COALESCE(q.reward_gold, 0) AS reward-- Награда: NULL → 0, чтобы не ломать расчёты
+        AVG(e.risk_level) AS avg_risk       -- Средний риск по всем событиям квеста
+    FROM quests q                            -- Таблица квестов
+    JOIN quest_events x                      -- Связующая таблица квест–событие
+        ON x.quest_id = q.quest_id          -- Привязываем события к квесту
+    JOIN events e                             -- Таблица событий (берём risk_level)
+        ON e.event_id = x.event_id           -- Привязываем детали события
+    GROUP BY q.quest_id                      -- Одна строка на квест: считаем агрегаты
+),                                           -- Разделитель между CTE
+sc AS (                                       -- CTE 2: расчёт метрики «награда/риск»
+    SELECT
+        quest_id,                            -- Переносим ID
+        reward,                               -- Награда (уже без NULL)
+        avg_risk,                            -- Средний риск
+        (1.0 * reward / NULLIF(avg_risk, 0)) AS rpr  -- RPR: 1.0 → вещественное деление; NULLIF → защита от деления на 0
+    FROM qe                                   -- Источник — предыдущий CTE
+)                                             -- Конец определения CTE
+SELECT *                                      -- Основной запрос: вывод всех колонок из sc
+FROM sc
+WHERE rpr > (                                 -- Фильтр: оставляем только «выше среднего»
+    SELECT AVG(rpr)                           -- Подзапрос: считаем среднее RPR по всем строкам sc
+    FROM sc                                   -- Из того же CTE (самоссылка)
+);
+
+task 5
+
+SELECT
+    l.name,                                 -- Название локации (по нему и группируем, и выводим)
+    SUM(e.risk_level) AS risk_sum          -- Суммируем risk_level всех событий в этой локации
+FROM events e                               -- Берём таблицу событий как основу
+JOIN locations l                            -- Присоединяем таблицу локаций
+    ON l.location_id = e.location_id       -- Связываем по ID локации
+GROUP BY l.name                             -- Агрегируем: одна строка на локацию, считаем сумму рисков
+ORDER BY risk_sum DESC, l.name              -- Сортируем: сначала по убыванию риска, потом по имени локации
+LIMIT 5;                                    -- Оставляем только топ‑5 локаций по суммарному риску
+task 6
+
+SELECT
+    c.name,                                 -- Имя персонажа — по нему будем группировать и показывать в отчёте
+    COUNT(*) AS events_cnt                 -- Считаем, сколько записей об участии в событиях есть для этого персонажа
+FROM event_participants ep                 -- Берём таблицу участия персонажей в событиях (основная таблица для подсчёта)
+JOIN characters c                         -- Присоединяем таблицу персонажей, чтобы получить их имена
+    ON c.character_id = ep.character_id   -- Связываем по ID: находим персонажа для каждой строки участия
+GROUP BY c.name                           -- Агрегируем: одна строка на имя персонажа, суммируем все его участия
+ORDER BY events_cnt DESC, c.name          -- Сортируем: сначала по убыванию числа событий (самые активные — вверху),
+                                          -- при равном числе событий — по алфавиту имени
+LIMIT 10;   -- Оставляем только топ‑10 самых активных персонажей
+
+task 6                            -- Оставляем только топ‑10 самых активных персонажей
+task 7
+task 8
+
+SELECT *                                                   -- Выводим все колонки из подзапроса (унифицированный список объектов)
+FROM (
+    SELECT
+        'character' AS obj_type,                          -- Тип объекта: фиксированная строка 'character'
+        CAST(character_id AS TEXT) AS obj_id,            -- ID персонажа приводим к тексту, чтобы он совпадал по типу с другими ID
+        name AS title,                                     -- Имя персонажа показываем как «заголовок» объекта
+        strength_level AS score                            -- Уровень силы — это наша метрика «значимости» для сортировки
+    FROM characters
+    UNION ALL                                             -- Объединяем строки из разных таблиц, сохраняя дубликаты (если они есть)
+    SELECT
+        'location' AS obj_type,                           -- Тип объекта: 'location'
+        CAST(location_id AS TEXT) AS obj_id,               -- ID локации в текстовом виде
+        name AS title,                                     -- Название локации как заголовок
+        danger_level AS score                              -- Уровень опасности — наша метрика для локации
+    FROM locations
+    UNION ALL
+    SELECT
+        'event' AS obj_type,                              -- Тип объекта: 'event'
+        CAST(event_id AS TEXT) AS obj_id,                 -- ID события в текстовом виде
+        event_type AS title,                                -- Тип события как заголовок (вместо имени)
+        risk_level AS score                                 -- Уровень риска — метрика для события
+    FROM events
+) u                                                        -- Алиас для всего объединённого набора строк
+ORDER BY
+    score DESC,                                            -- Сначала самые «сильные/опасные/рискованные» объекты
+    obj_type,                                              -- Потом сортируем по типу (чтобы группы шли в понятном порядке)
+    obj_id;                                                -- Внутри типа — по ID (для детерминированного порядка)
+LIMIT 15;           
+
+task 9
+
+    SELECT DISTINCT                              -- Гарантируем, что не будет дубликатов строк (на случай, если в данных есть повторы)
+    ep1.event_id,                            -- ID события, где встретились два персонажа
+    c1.name AS a,                            -- Имя первого персонажа в паре
+    c2.name AS b,                            -- Имя второго персонажа в паре
+    c1.alignment AS a_al,                   -- Мировоззрение первого персонажа
+    c2.alignment AS b_al                    -- Мировоззрение второго персонажа
+FROM event_participants ep1                 -- Берём первую копию таблицы участия (для первого персонажа)
+JOIN event_participants ep2                  -- Присоединяем вторую копию той же таблицы (для второго персонажа)
+    ON ep1.event_id = ep2.event_id           -- Они должны быть в одном и том же событии
+    AND ep1.character_id < ep2.character_id -- Ключевое условие: формируем пары без дублей и без самопар (a,b), но не (b,a) и не (a,a)
+JOIN characters c1                           -- Получаем данные первого персонажа
+    ON c1.character_id = ep1.character_id
+JOIN characters c2                           -- Получаем данные второго персонажа
+    ON c2.character_id = ep2.character_id
+WHERE c1.alignment <> c2.alignment;         -- Оставляем только пары,
+task 10

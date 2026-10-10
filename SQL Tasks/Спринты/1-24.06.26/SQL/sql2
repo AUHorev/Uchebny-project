@@ -1,0 +1,74 @@
+
+-- task 1
+select 
+*
+from "characters" 
+where species ='ogre'
+
+-- tasc 2
+select 
+event_id,
+event_type,
+risk_level
+from events 
+where risk_level  <4
+
+-- tasc 3
+SELECT locations, danger_level 
+FROM locations 
+WHERE type IN ('swamp','forest')
+order by type, name
+
+
+-- tasc 4
+
+SELECT name, strength_level 
+from characters
+where strength_level  between 4 and 6
+
+-- tasc 5
+
+SELECT name, alignment 
+from characters
+where alignment !='good'
+
+-- tasc 6
+
+SELECT quest_id , quest_name , reward_gold 
+from quests 
+where reward_gold >=100
+
+-- tasc 7
+
+
+SELECT 
+ quest_id, 
+quest_name 
+FROM quests 
+WHERE reward_gold IS NULL;
+
+
+-- tasc 8
+
+select *
+from event_participants ep 
+where ep.role_in_event ='victim'
+order by event_id,
+character_id
+
+
+-- tasc 9
+
+select *
+from events
+where start_day=5
+
+-- tasc 10
+SELECT 
+    * 
+FROM "characters"  
+WHERE 
+    (is_magical = 1 AND intelligence_level >= 7) 
+    OR 
+    (alignment = 'evil' AND strength_level >= 6)
+

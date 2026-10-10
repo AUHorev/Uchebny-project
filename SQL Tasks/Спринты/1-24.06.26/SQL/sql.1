@@ -1,0 +1,82 @@
+-- tasc 1
+select *
+from
+limit 12
+
+
+-- tasc 2  --
+
+select
+distinct species
+from characters
+order by species
+
+-- tasc 3  --
+
+select 
+locations,
+danger_level 
+from locations 
+order by danger_level desc,
+locations
+limit 5
+
+-- tasc 4  --
+
+select 
+event_id,
+event_type,
+risk_level
+from events 
+order by risk_level desc
+limit 5
+
+-- tasc 5  -- список ролей
+
+select 
+distinct ep.role_in_event 
+from event_participants ep 
+
+-- tasc 6  --
+
+select 
+quest_id,
+quest_name
+from quests
+order by quest_id 
+limit 10
+
+-- tasc 7  --
+
+select 
+distinct issued_by
+from quests 
+order by issued_by asc
+
+-- tasc 8  --
+
+select 
+name,
+strength_level
+from "characters" 
+order by strength_level desc,
+name asc
+
+-- tasc 9  --
+select 
+event_id,
+event_type,
+start_day
+from events 
+order by start_day asc,
+event_id
+
+
+-- tasc 10 --
+
+select 
+species,
+is_magical
+from "characters" 
+order by species,
+is_magical 

@@ -1,0 +1,116 @@
+task 1
+
+SELECT 
+e.event_id,
+to_date('2001-01-01','YYYY-MM-DD')+e.start_day-1 as start_date,
+to_date('2001-01-01', 'YYYY-MM-DD')+e.end_day-1 as end_date
+from events e
+where e.end_day is not null
+
+task 2
+
+
+SELECT 
+e.event_id,
+to_date('2001-01-01','YYYY-MM-DD')+e.start_day-1 as start_date,
+to_date('2001-01-01', 'YYYY-MM-DD')+e.end_day-1 as end_date
+from events e
+where e.end_day is not null
+    AND ('2001-01-01'::date + e.start_day - 1) >= '2001-01-01'
+    AND ('2001-01-01'::date + e.start_day - 1) <= '2001-01-31'
+
+task 3
+
+SELECT 
+    e.event_id,
+    '2001-01-01'::date + e.start_day - 1 AS start_date,
+    EXTRACT(DOW FROM ('2001-01-01'::date + e.start_day - 1)) AS day_of_week
+FROM events e
+WHERE e.end_day IS NOT NULL
+ORDER BY 
+    start_date,
+    event_id;
+
+task 4
+
+SELECT 
+    event_id,
+    start_day,
+    end_day,
+    (end_day - start_day + 1) AS duration_days
+FROM events
+WHERE end_day IS NOT NULL
+ORDER BY duration_days DESC
+LIMIT 3;
+
+task 5
+
+SELECT 
+    event_id,
+    '2001-01-01'::date + start_day - 1 AS start_date,
+    risk_level
+FROM events
+WHERE 
+    end_day IS NOT NULL
+    AND ('2001-01-01'::date + start_day - 1) > '2001-01-05'
+    AND risk_level >= 7
+ORDER BY start_date;
+
+task 6
+
+SELECT 
+    event_id,
+    event_type,
+    DATE '2001-01-01' + (start_day - 1) AS start_date,
+    EXTRACT(DOW FROM (DATE '2001-01-01' + (start_day - 1))) AS dow
+FROM events
+WHERE 
+    EXTRACT(DOW FROM (DATE '2001-01-01' + (start_day - 1))) IN (0, 6)  -- 0 = воскресенье, 6 = суббота
+ORDER BY 
+    start_date,
+    event_id;
+
+task 7
+
+SELECT 
+    DATE '2001-01-01' + (start_day - 1) AS start_date,
+    COUNT(*) AS events_count,
+    SUM(risk_level) AS total_risk
+FROM events
+WHERE end_day IS NOT NULL
+GROUP BY DATE '2001-01-01' + (start_day - 1)
+ORDER BY start_date;
+
+task 8
+
+SELECT 
+    event_id,
+    start_day,
+    end_day,
+    (end_day - start_day + 1) AS duration_days,
+    DATE '2001-01-01' + (start_day - 1) AS start_date,
+    DATE '2001-01-01' + (end_day - 1) AS end_date
+FROM events
+WHERE 
+    end_day IS NOT NULL
+    AND (end_day - start_day + 1) >= 2;
+
+task 9
+
+SELECT 
+    DATE '2001-01-01' + (start_day - 1) AS start_date,
+    COUNT(*) AS events_count
+FROM events
+WHERE end_day IS NOT NULL
+GROUP BY DATE '2001-01-01' + (start_day - 1)
+ORDER BY events_count DESC
+LIMIT 5;
+
+task 10
+
+SELECT 
+    event_id,
+    DATE '2001-01-01' + (start_day - 1) AS start_date,
+    (DATE '2001-01-01' + (start_day - 1)) + INTERVAL '12 hours' AS start_timestamp
+FROM events
+WHERE end_day IS NOT NULL;

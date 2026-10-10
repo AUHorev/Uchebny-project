@@ -1,0 +1,107 @@
+--- task 1 
+
+
+SELECT
+    event_id,                          -- Выбираем идентификатор события
+    risk_level,                       -- Выбираем текущий уровень риска
+    CASE 
+        WHEN risk_level >= 8 THEN 1   -- Если уровень риска 8 или выше — ставим 1 (высокий риск)
+        ELSE 0                        -- Иначе ставим 0 (не высокий риск)
+    END AS is_high_risk               -- Присваиваем имя новой колонке
+FROM events                           -- Данные берём из таблицы events
+ORDER BY is_high_risk DESC;           -- Сортируем: сначала строки с высоким риском (1), потом с низким (0)
+
+
+select
+event_id,
+risk_level,
+case when risk_level>=8 then 1 else 0 end as is_high_risk
+from events 
+order by is_high_risk desc
+
+-----   task 2
+
+select
+location_id,
+event_type,
+sum(case when risk_level>=8 then 1 else 0 end) as high_risk
+from events 
+group by location_id, event_type
+order by high_risk desc
+
+task 3
+
+select 
+species,
+count(*) cnt,
+SUM(case when is_magical = 1 then 1 else 0 end) magical_cnt,
+SUM(case when strength_level>=7 then 1 else 0 end) dangerous_cnt
+from characters c
+group by species
+order by magical_cnt desc , dangerous_cnt desc
+
+
+  task 4
+
+ 
+
+  task 5
+
+SELECT
+    quest_id,
+    COALESCE(reward_gold, 0) AS reward,
+    CASE
+        WHEN COALESCE(reward_gold, 0) >= 200 THEN 'high'
+        WHEN COALESCE(reward_gold, 0) >= 100 THEN 'mid'
+        ELSE 'low'
+    END AS bucket
+FROM quests;    
+
+  task 6
+
+select *
+from characters
+where alignment='evil'
+
+  task 7
+
+with x as (
+select case
+when alignment='evil' then 'threat'
+when is_magical=1 then 'special'
+else  'standard'
+end as segment
+from characters)
+select segment,
+count (*) cnt
+from x
+group by segment	
+  task 8
+
+
+SELECT event_type,
+       SUM(CASE WHEN risk_level>=9 THEN 1 ELSE 0 END) critical_cnt
+  FROM events
+  GROUP BY event_type
+order by critical_cnt desc;
+
+  task 9
+
+SELECT SUM(CASE WHEN (COALESCE(end_day,start_day)-start_day+1)>1 THEN 1 ELSE 0 END) long_events_cnt
+  FROM events;
+
+
+  task 10
+
+  WITH c AS (
+    SELECT ch.character_id,
+       ch.name,
+       COUNT(ep.event_id) events_cnt
+  FROM characters ch
+  LEFT JOIN event_participants ep
+    ON ep.character_id=ch.character_id
+  GROUP BY ch.character_id,ch.name)
+SELECT name,
+       events_cnt,
+       CASE WHEN events_cnt>=2 THEN 1 ELSE 0 END is_active
+  FROM c

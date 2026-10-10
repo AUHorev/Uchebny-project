@@ -1,0 +1,128 @@
+Сведение таблиц UNION
+
+TASK 1
+SELECT 
+    'character' AS obj_type,          -- 1. Фиксированная метка: тип объекта = 'character'
+    character_id AS obj_id,          -- 2. ID персонажа → общий ID объекта
+    name AS name,                    -- 3. Имя (оставляем как есть)
+    strength_level AS risk_score     -- 4. Сила персонажа трактуется как «оценка риска»
+FROM characters                       -- 5. Источник: таблица персонажей
+UNION ALL                             -- 6. Объединяем два набора строк БЕЗ удаления дублей
+SELECT 
+    'event' AS obj_type,              -- 7. Фиксированная метка: тип объекта = 'event'
+    event_id AS obj_id,               -- 8. ID события → общий ID объекта
+    event_type AS name,               -- 9. Тип события показываем как «имя» (для единообразия)
+    risk_level AS risk_score          -- 10. Уровень риска события → общая метрика риска
+FROM events;                          -- 11. Источник: таблица событий
+
+
+TASK 2
+
+
+SELECT 
+    species AS label,          -- 1. Берём колонку species из characters, называем её label
+    'character_species' AS source  -- 2. Добавляем фиксированную строку-маркер источника
+FROM characters                -- 3. Источник данных — таблица characters
+UNION ALL                      -- 4. Объединяем с результатом следующего SELECT, сохраняя дубликаты
+SELECT 
+    type,                      -- 5. Берём колонку type из locations (без переименования)
+    'location_type'            -- 6. Добавляем строку-маркер для этого источника
+FROM locations;                 -- 7. Источник данных — таблица locations
+TASK 3 
+
+SELECT
+    issued_by,                          -- Кто выдал квест (субъект действия; ключевой атрибут для сегментации по пользователям/сервисам)
+    quest_id,                           -- Уникальный идентификатор квеста (первичный ключ строки; нужен для трассировки и дедупликации)
+    quest_name,                         -- Человекочитаемое название квеста (для отчётов и валидации данных)
+    ROW_NUMBER() OVER (                -- Оконная функция для присвоения порядкового номера в рамках группы
+        PARTITION BY issued_by          -- Разбиваем данные на независимые окна по каждому выдавшему (изолируем нумерацию для каждого субъекта)
+        ORDER BY quest_id               -- Внутри окна сортируем по ID квеста (обычно ID монотонно растёт, поэтому это фактически порядок выдачи)
+    ) AS rn                             -- Псевдоним колонки: порядковый номер квеста для данного выдавшего (1, 2, 3… внутри каждой группы)
+FROM quests
+
+TASK 4
+
+
+SELECT *  -- 1. Выбираем все колонки из подзапроса (obj_type, name, score)
+  FROM (  -- 2. Начинаем подзапрос-источник (производная таблица)
+    SELECT 
+      'character' obj_type,  -- 3. Жестко задаем тип объекта как литерал 'character'
+      name,                    -- 4. Берем имя персонажа
+      strength_level score     -- 5. Переименовываем strength_level в score — приводим к единой метрике силы/опасности
+    FROM characters            -- 6. Источник: таблица персонажей
+        UNION ALL                  -- 7. Объединяем наборы строк БЕЗ удаления дубликатов (быстрее, чем UNION)
+        SELECT 
+      'location' obj_type,     -- 8. Жестко задаем тип объекта как 'location'
+      name,                    -- 9. Берем название локации
+      danger_level score       -- 10. Переименовываем danger_level в score — теперь это «оценка» и для локации
+    FROM locations             -- 11. Источник: таблица локаций
+  ) u                          -- 12. Алиас производной таблицы (без него синтаксис недопустим)
+  ORDER BY score DESC,         -- 13. Сортируем по «оценке» по убыванию (самые сильные/опасные — сверху)
+           obj_type,           -- 14. При равных score сначала идут объекты одного типа (порядок зависит от сортировки строк)
+           name                -- 15. При равных score и типе — по алфавиту имени
+  LIMIT 10;      
+                -- 16. Оставляем только топ-10 записей
+
+
+TASK 5
+
+WITH u AS (
+    SELECT 'characters' src
+  FROM characters
+UNION ALL SELECT 'locations'
+  FROM locations
+UNION ALL SELECT 'events'
+  FROM events
+UNION ALL SELECT 'quests'
+  FROM quests)
+SELECT src,
+       COUNT(*) cnt
+  FROM u
+  GROUP BY src;
+
+
+TASK 6
+
+SELECT quest_id,
+       'success' status
+  FROM quests
+  WHERE success=1
+UNION ALL SELECT quest_id,'fail'
+  FROM quests
+  WHERE success=0
+
+TASK 7
+SELECT name title
+  FROM characters
+UNION SELECT quest_name
+  FROM quests;             -- 6. Фильтр: только неуспешные квесты
+
+TASK 8
+
+SELECT name
+  FROM locations
+ WHERE type = 'swamp'
+UNION ALL  -- Объединяем результаты двух запросов, сохраняя все строки (включая дубли)
+-- Выбираем названия квестов, где в имени встречается «swamp» (регистронезависимо)
+SELECT quest_name
+  FROM quests
+ WHERE LOWER(quest_name) LIKE '%swamp%'
+
+TASK 9
+
+SELECT event_type AS key          -- берём типы событий и называем колонку key
+FROM events                      -- из таблицы событий
+UNION                            -- объединяем два набора, убирая дубликаты
+SELECT issued_by                 -- берём тех, кто выдал квесты
+FROM quests;                     -- из таблицы квестов
+
+TASK 10
+SELECT 
+    issued_by,                 -- кто выдал квест
+    quest_id,                  -- идентификатор квеста
+    quest_name,                -- название квеста
+    ROW_NUMBER() OVER (       -- нумеруем строки
+        PARTITION BY issued_by  -- отдельно для каждого выдавшего
+        ORDER BY quest_id       -- сортируем по ID квеста
+    ) AS rn                    -- порядковый номер в группе
+FROM quests;                   -- источник данных

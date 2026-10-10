@@ -1,0 +1,55 @@
+--- self join  ДЖОИН САМ НА СЕБЯ
+
+task 1
+SELECT a.species,
+       a.name a,
+       b.name b
+  FROM characters a
+  JOIN characters b
+   ON a.species=b.species and a.character_id<b.character_id
+
+task 2
+ ---- я написал вот так без WERE 
+SELECT a.type,
+       a.danger_level
+  FROM locations a
+  JOIN locations b
+    ON a.type = b.type 
+   AND a.danger_level <> b.danger_level 
+   AND a.location_id < b.location_id
+
+   task 3
+
+   SELECT
+    a.character_id,
+    a.name,
+    a.species,
+    a.strength_level
+FROM "characters" a
+JOIN "characters" b
+    ON a.species = b.species 
+    AND a.strength_level = b.strength_level 
+    AND a.character_id <> b.character_id
+
+  task 4
+select 
+    a.event_type,
+    a.event_id,
+    a.location_id,
+    b.location_id
+from events a
+join events b
+    on a.event_type = b.event_type 
+    and a.event_id < b.event_id
+
+
+task 5
+SELECT 
+    a.species,
+    a.name AS magical_one,
+    b.name AS nonmagical_one
+FROM characters a
+JOIN characters b
+    ON a.species = b.species 
+    AND a.is_magical = 1 
+    AND b.is_magical = 0

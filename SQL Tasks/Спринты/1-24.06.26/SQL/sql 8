@@ -1,0 +1,75 @@
+Task 1
+
+select
+*
+from
+events
+where end_day is null
+
+
+Task 2 
+
+select
+count(*) as cnt
+from events 
+where end_day is null
+
+Task 3
+
+select
+round(avg(coalesce(end_day,start_day)-start_day+1),3) avg_dur
+from events	
+
+Task 4
+
+select
+min(coalesce(reward_gold,0)) min_revard,
+max(coalesce(reward_gold,0)) max_revard
+from quests	
+
+Task 5
+
+select 
+quest_id,
+reward_gold,
+coalesce(reward_gold, 0) as reward_filled
+from quests
+
+
+Task 6
+
+SELECT 
+count(*)
+from quests
+where success is null
+
+
+Task 7
+
+SELECT 
+count(*)
+from quests
+where success is null
+
+Task 8
+
+SELECT 
+round(avg(coalesce(success, 0)), 4) 	successe_rate
+from quests
+
+
+Task 9
+
+select
+name,
+coalesce(intelligence_level, -1) as intellligense_filled
+from characters
+order by intellligense_filled desc
+
+Task 10
+
+SELECT alignment,
+       ROUND(AVG(intelligence_level),3) avg_int,
+       COUNT(intelligence_level) known_cnt
+  FROM characters
+  GROUP BY alignment;
